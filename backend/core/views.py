@@ -4,7 +4,7 @@ from django.shortcuts import render
 from rest_framework import viewsets
 from .models import Post, Reply, DMMessage, Announcement
 from .serializers import PostSerializer, ReplySerializer, DMMessageSerializer, AnnouncementSerializer
-from django.contrib.auth.models import User
+from core.models import User
 
 class PostViewSet(viewsets.ModelViewSet):
     queryset = Post.objects.all().order_by('-created_at')
