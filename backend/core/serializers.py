@@ -10,7 +10,7 @@ class PostSerializer(serializers.ModelSerializer):
     class Meta:
         model = Post
         fields = '__all__'
-
+        
 class ReplySerializer(serializers.ModelSerializer):
     class Meta:
         model = Reply
