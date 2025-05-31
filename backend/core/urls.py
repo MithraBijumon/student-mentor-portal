@@ -10,6 +10,5 @@ router.register(r'users', UserViewSet)
 router.register(r'announcements', AnnouncementViewSet)
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('', include('core.urls')),  # 👈 include your app's urls
+    path('', include(router.urls)),
 ]
