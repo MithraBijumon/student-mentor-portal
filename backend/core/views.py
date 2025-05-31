@@ -3,7 +3,7 @@ from django.shortcuts import render
 # Create your views here.
 from rest_framework import viewsets
 from .models import Post, Reply, DMMessage, Announcement
-from .serializers import PostSerializer, ReplySerializer, DMMessageSerializer, AnnouncementSerializer
+from .serializers import PostSerializer, ReplySerializer, DMMessageSerializer, AnnouncementSerializer, UserSerializer
 from core.models import User
 
 class PostViewSet(viewsets.ModelViewSet):
