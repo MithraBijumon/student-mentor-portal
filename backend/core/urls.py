@@ -6,8 +6,10 @@ router = DefaultRouter()
 router.register(r'posts', PostViewSet)
 router.register(r'replies', ReplyViewSet)
 router.register(r'dms', DMViewSet)
+router.register(r'users', UserViewSet)
 router.register(r'announcements', AnnouncementViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path('admin/', admin.site.urls),
+    path('', include('core.urls')),  # 👈 include your app's urls
 ]

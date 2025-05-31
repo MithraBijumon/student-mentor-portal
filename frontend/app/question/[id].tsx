@@ -28,7 +28,7 @@ export default function QuestionDetailScreen() {
   const fetchQuestion = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`http://192.168.56.1:8000/api/questions/${id}/`);
+      const response = await axios.get(`https://your-app.onrender.com/posts/${id}/`);
       setQuestion(response.data);
     } catch (error) {
       console.error('Failed to load question:', error);
@@ -41,7 +41,7 @@ export default function QuestionDetailScreen() {
     if (!reply.trim()) return;
     setSubmitting(true);
     try {
-      await axios.post(`http://192.168.56.1:8000/api/questions/${id}/reply/`, {
+      await axios.post(`https://your-app.onrender.com/posts/${id}/reply/`, {
         message: reply,
         author: 'Student', // Replace with actual user name if available
       });

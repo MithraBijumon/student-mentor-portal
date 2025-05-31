@@ -21,8 +21,8 @@ export default function HomeScreen() {
     try {
       const url =
         filter === 'all'
-          ? 'http://192.168.56.1:8000/api/questions/'
-          : `http://192.168.56.1:8000/api/questions/?filter=${filter}`;
+          ? 'https://your-app.onrender.com/posts/'
+          : `https://your-app.onrender.com/posts/?filter=${filter}`;
       const response = await axios.get(url);
       setQuestions(response.data);
     } catch (error) {

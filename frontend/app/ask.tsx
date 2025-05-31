@@ -16,7 +16,7 @@ export default function AskScreen() {
     }
 
     try {
-      await axios.post('http://YOUR_BACKEND_URL/api/questions/', {
+      await axios.post('https://student-mentor-portal.onrender.com/posts/', {
         title,
         body,
       });

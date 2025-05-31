@@ -20,3 +20,13 @@ class DMViewSet(viewsets.ModelViewSet):
 class AnnouncementViewSet(viewsets.ModelViewSet):
     queryset = Announcement.objects.all()
     serializer_class = AnnouncementSerializer
+
+class UserViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+
+    def get_queryset(self):
+        is_mentor = self.request.query_params.get('is_mentor')
+        if is_mentor == 'true':
+            return User.objects.filter(is_mentor=True)
+        return super().get_queryset()
