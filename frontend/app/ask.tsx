@@ -17,8 +17,9 @@ export default function AskScreen() {
 
     try {
       await axios.post('https://student-mentor-portal.onrender.com/posts/', {
+        title: title,
         text: body,
-        anonymous: false,
+        author: 1  // or get actual name if available
 });
       Alert.alert('Doubt posted!');
       router.replace('/home'); // redirect to home after posting

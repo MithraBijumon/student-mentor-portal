@@ -21,8 +21,8 @@ export default function HomeScreen() {
     try {
       const url =
         filter === 'all'
-          ? 'https://your-app.onrender.com/posts/'
-          : `https://your-app.onrender.com/posts/?filter=${filter}`;
+          ? 'https://student-mentor-portal.onrender.com/posts/'
+          : `https://student-mentor-portal.onrender.com/posts/?filter=${filter}`;
       const response = await axios.get(url);
       setQuestions(response.data);
     } catch (error) {

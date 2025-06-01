@@ -41,7 +41,7 @@ export default function QuestionDetailScreen() {
     if (!reply.trim()) return;
     setSubmitting(true);
     try {
-      await axios.post(`https://your-app.onrender.com/posts/${id}/reply/`, {
+      await axios.post(`https://student-mentor-portal.onrender.com/posts/${id}/reply/`, {
         message: reply,
         author: 'Student', // Replace with actual user name if available
       });
