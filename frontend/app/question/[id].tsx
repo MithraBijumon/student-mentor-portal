@@ -28,7 +28,7 @@ export default function QuestionDetailScreen() {
   const fetchQuestion = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`https://studennt-mentor-portal.onrender.com/posts/${id}/`);
+      const response = await axios.get(`https://student-mentor-portal.onrender.com/posts/${id}/`);
       setQuestion(response.data);
     } catch (error) {
       console.error('Failed to load question:', error);
