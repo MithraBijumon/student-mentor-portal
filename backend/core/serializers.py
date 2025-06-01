@@ -7,10 +7,14 @@ class UserSerializer(serializers.ModelSerializer):
         fields = ['id', 'username', 'roll_number', 'is_mentor']
 
 class PostSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        slug_field='username',       # Use username to identify author
+        queryset=User.objects.all()  # Allow lookup of existing users
+    )
     class Meta:
         model = Post
         fields = '__all__'
-        
+
 class ReplySerializer(serializers.ModelSerializer):
     class Meta:
         model = Reply
