@@ -1,11 +1,20 @@
 // app/(tabs)/AnnouncementsScreen.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet } from 'react-native';
 
 export default function AnnouncementsScreen() {
   return (
-    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-      <Text>Mentor Announcements</Text>
+    <View style={styles.container}>
+      <Text style={styles.heading}>Mentor Announcements</Text>
     </View>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#fff',
+  },
+  heading: { fontSize: 22, fontWeight: 'bold', marginBottom: 20 }
+})
