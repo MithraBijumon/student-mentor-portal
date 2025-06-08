@@ -1,16 +1,22 @@
-import { View, Text, TextInput, Button } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
+import React from "react";
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
+import LoginScreen from "react-native-login-screen";
 
-export default function LoginScreen() {
+export default function Login() {
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
   const router = useRouter();
-  const [roll, setRoll] = useState('');
 
   return (
-    <View style={{ padding: 20 }}>
-      <Text>Roll Number</Text>
-      <TextInput style={{ borderWidth: 1, marginBottom: 20 }} onChangeText={setRoll} value={roll} />
-      <Button title="Login" onPress={() => router.replace('/(tabs)/home')} />
-    </View>
+    <LoginScreen
+      logoImageSource={require('../assets/images/icon.png')}
+      onLoginPress={() => router.replace('/(tabs)/home')}
+      onSignupPress={() => {}}
+      onEmailChange={setUsername}
+      onPasswordChange={setPassword}
+      enablePasswordValidation
+    />
   );
 }
