@@ -224,3 +224,9 @@ const styles = StyleSheet.create({
     marginLeft: 5,
   }
 });
+
+//TODO:
+// 1. Send verification email
+// 2. Integrate with backend so user, password and email gets added to a backend
+// 3. Check that email or username doesn't already exist
+// 4. A logo

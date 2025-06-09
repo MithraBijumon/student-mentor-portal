@@ -14,7 +14,7 @@ import {
 } from "react-native-responsive-screen";
 import { Ionicons } from "@expo/vector-icons";;
 export default function LoginScreen() {
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [Username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [passwordVisible, setPasswordVisible] = useState(false);
   const router = useRouter();
@@ -25,21 +25,21 @@ export default function LoginScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Login</Text>
       <Image
-        source={require("../assets/images/icon.png")}
+        source={require("../assets/images/icon.png")} //Change icon
         style={styles.logoIcon}
       />
       <View style={styles.inputContainer}>
         <TextInput
           style={styles.input}
-          onChangeText={setPhoneNumber}
-          value={phoneNumber}
+          onChangeText={setUsername}
+          value={Username}
           placeholder="Username"
         />
         <Ionicons
           name="person-circle-outline"
           size={24}
           color="grey"
-          style={styles.phoneIcon}
+          style={styles.UsernameIcon}
         />
       </View>
       <View style={styles.inputContainer}>
@@ -61,7 +61,7 @@ export default function LoginScreen() {
           />
         </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.button}>
+      <TouchableOpacity style={styles.button} onPress={() => router.replace('/(tabs)/home')}> 
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
       <Text style={styles.forgotPassword}>I forgot my password</Text>
@@ -151,9 +151,14 @@ const styles = StyleSheet.create({
     right: wp("2.5%"),
     padding: wp("2.5%"),
   },
-  phoneIcon: {
+  UsernameIcon: {
     position: "absolute",
     right: wp("2.5%"),
     padding: wp("2.5%"),
   },
 });
+
+//TODO:
+//1. I forgot my password page
+//2. After integrating with backend validate login properly instead of directly going to home page
+// 3. A logo
