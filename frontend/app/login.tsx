@@ -64,7 +64,9 @@ export default function LoginScreen() {
       <TouchableOpacity style={styles.button} onPress={() => router.replace('/(tabs)/home')}> 
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
-      <Text style={styles.forgotPassword}>I forgot my password</Text>
+      <TouchableOpacity onPress={() => router.replace('/password-reset')}> 
+        <Text style={styles.forgotPassword}>I forgot my password</Text>
+      </TouchableOpacity>
       <View style={styles.signupContainer}>
         <Text>Create Account</Text>
         <TouchableOpacity onPress={() => router.replace('/register')}>
@@ -159,6 +161,6 @@ const styles = StyleSheet.create({
 });
 
 //TODO:
-//1. I forgot my password page
-//2. After integrating with backend validate login properly instead of directly going to home page
+// 1. I forgot my password page
+// 2. After integrating with backend validate login properly instead of directly going to home page
 // 3. A logo

@@ -1,33 +1,183 @@
-from django.shortcuts import render
+# views.py
+from rest_framework import generics, status, permissions
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate
+from django.db.models import Q
+from .models import User, Message, Conversation, MentorProfile, StudentProfile
+from .serializers import (
+    UserSerializer, MessageSerializer, ConversationSerializer,
+    MentorProfileSerializer, StudentProfileSerializer, LoginSerializer
+)
+from django.core.mail import send_mail
+from django.urls import reverse
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth.tokens import default_token_generator
+from .models import Doubt
+from .serializers import DoubtSerializer
 
-# Create your views here.
-from rest_framework import viewsets
-from .models import Post, Reply, DMMessage, Announcement
-from .serializers import PostSerializer, ReplySerializer, DMMessageSerializer, AnnouncementSerializer, UserSerializer
-from core.models import User
+# Authentication Views
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def register(request):
+    serializer = UserSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.save()
+        user.is_active = False  # user must verify first
+        user.save()
 
-class PostViewSet(viewsets.ModelViewSet):
-    queryset = Post.objects.all().order_by('-created_at')
-    serializer_class = PostSerializer
+        # Generate activation link
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        activation_url = f"http://your-frontend-domain/verify-email/{uid}/{token}"
 
-class ReplyViewSet(viewsets.ModelViewSet):
-    queryset = Reply.objects.all()
-    serializer_class = ReplySerializer
+        send_mail(
+            subject='Verify your email',
+            message=f'Click the link to verify your email: {activation_url}',
+            from_email=None,
+            recipient_list=[user.email],
+        )
 
-class DMViewSet(viewsets.ModelViewSet):
-    queryset = DMMessage.objects.all()
-    serializer_class = DMMessageSerializer
+        return Response({
+            'message': 'Verification email sent. Please verify your email to activate your account.'
+        }, status=status.HTTP_201_CREATED)
 
-class AnnouncementViewSet(viewsets.ModelViewSet):
-    queryset = Announcement.objects.all()
-    serializer_class = AnnouncementSerializer
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class UserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all()
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def login(request):
+    serializer = LoginSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.validated_data['user']
+        token, created = Token.objects.get_or_create(user=user)
+        return Response({
+            'user': UserSerializer(user).data,
+            'token': token.key
+        })
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['POST'])
+def logout(request):
+    try:
+        request.user.auth_token.delete()
+        return Response({'message': 'Successfully logged out'})
+    except:
+        return Response({'error': 'Error logging out'}, status=status.HTTP_400_BAD_REQUEST)
+
+# User Views
+class UserListView(generics.ListAPIView):
     serializer_class = UserSerializer
-
+    permission_classes = [permissions.IsAuthenticated]
+    
     def get_queryset(self):
-        is_mentor = self.request.query_params.get('is_mentor')
-        if is_mentor == 'true':
-            return User.objects.filter(is_mentor=True)
-        return super().get_queryset()
+        queryset = User.objects.all()
+        user_type = self.request.query_params.get('type', None)
+        if user_type:
+            queryset = queryset.filter(user_type=user_type)
+        return queryset
+
+class UserDetailView(generics.RetrieveUpdateAPIView):
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_object(self):
+        return self.request.user
+
+# Message Views
+class MessageListCreateView(generics.ListCreateAPIView):
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        user = self.request.user
+        return Message.objects.filter(
+            Q(sender=user) | Q(receiver=user)
+        ).order_by('-timestamp')
+    
+    def perform_create(self, serializer):
+        receiver_id = self.request.data.get('receiver_id')
+        try:
+            receiver = User.objects.get(id=receiver_id)
+            serializer.save(sender=self.request.user, receiver=receiver)
+        except User.DoesNotExist:
+            raise serializers.ValidationError('Receiver not found')
+
+@api_view(['GET'])
+def conversation_messages(request, user_id):
+    """Get messages between current user and another user"""
+    try:
+        other_user = User.objects.get(id=user_id)
+        messages = Message.objects.filter(
+            (Q(sender=request.user) & Q(receiver=other_user)) |
+            (Q(sender=other_user) & Q(receiver=request.user))
+        ).order_by('timestamp')
+        
+        serializer = MessageSerializer(messages, many=True)
+        return Response(serializer.data)
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+@api_view(['POST'])
+def mark_messages_read(request, user_id):
+    """Mark all messages from a specific user as read"""
+    try:
+        sender = User.objects.get(id=user_id)
+        Message.objects.filter(
+            sender=sender, 
+            receiver=request.user, 
+            is_read=False
+        ).update(is_read=True)
+        return Response({'message': 'Messages marked as read'})
+    except User.DoesNotExist:
+        return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+
+# Mentor/Student specific views
+class MentorListView(generics.ListAPIView):
+    queryset = User.objects.filter(user_type='mentor')
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+class StudentListView(generics.ListAPIView):
+    queryset = User.objects.filter(user_type='student')
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+@api_view(['GET'])
+def user_conversations(request):
+    """Get all conversations for the current user"""
+    user = request.user
+    
+    # Get unique users who have exchanged messages with current user
+    sent_to = Message.objects.filter(sender=user).values_list('receiver', flat=True).distinct()
+    received_from = Message.objects.filter(receiver=user).values_list('sender', flat=True).distinct()
+    
+    conversation_users = set(sent_to) | set(received_from)
+    conversations = []
+    
+    for user_id in conversation_users:
+        other_user = User.objects.get(id=user_id)
+        last_message = Message.objects.filter(
+            (Q(sender=user) & Q(receiver=other_user)) |
+            (Q(sender=other_user) & Q(receiver=user))
+        ).order_by('-timestamp').first()
+        
+        conversations.append({
+            'user': UserSerializer(other_user).data,
+            'last_message': MessageSerializer(last_message).data if last_message else None,
+            'unread_count': Message.objects.filter(
+                sender=other_user, receiver=user, is_read=False
+            ).count()
+        })
+    
+    # Sort by last message timestamp
+    conversations.sort(key=lambda x: x['last_message']['timestamp'] if x['last_message'] else '', reverse=True)
+    
+    return Response(conversations)
+
+class DoubtCreateView(generics.CreateAPIView):
+    queryset = Doubt.objects.all()
+    serializer_class = DoubtSerializer
+    #permission_classes = [permissions.IsAuthenticated]

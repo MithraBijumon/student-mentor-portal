@@ -1,3 +1,4 @@
+//register.tsx
 import React, { useState } from "react";
 import { useRouter } from 'expo-router';
 import {
@@ -9,6 +10,7 @@ import {
   Image,
   Alert,
 } from "react-native";
+import axios from 'axios';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -48,17 +50,26 @@ const handleSubmit = async () => {
       return;
     }
     if (!passwordsMatch) {
-      Alert.alert('Please fill the same password in both places');
+      Alert.alert('Password do not match');
       return;
     }
     try {
+      const response = await axios.post('http://192.168.56.1:8000/api/auth/register/', {
+      username: Username,
+      email: Email,
+      password: password,
+    });
+      if (response.status === 201) {
       Alert.alert('Verification mail sent! Verify to login');
-      router.replace('/login'); // redirect to home after posting
-    } catch (error) {
-      console.error('Error sending verification mail', error);
-      Alert.alert('Failed to send verification mail');
+      router.replace('/login');
+    } else {
+      Alert.alert('Registration failed');
     }
-  };
+    } catch (error: any) {
+    console.error('Registration error:', error.response?.data || error.message);
+    Alert.alert('Error', error.response?.data?.email?.[0] || 'Registration failed');
+  }
+}
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Register</Text>

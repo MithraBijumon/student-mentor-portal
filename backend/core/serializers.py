@@ -1,31 +1,96 @@
+# serializers.py
 from rest_framework import serializers
-from .models import User, Post, Reply, DMMessage, Announcement
+from django.contrib.auth import authenticate
+from .models import User, Message, Conversation, MentorProfile, StudentProfile, Doubt
 
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    
     class Meta:
         model = User
-        fields = ['id', 'username', 'roll_number', 'is_mentor']
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 
+                 'user_type', 'is_mentor', 'phone', 'bio', 'password']
+        extra_kwargs = {'password': {'write_only': True}}
+    
+    def create(self, validated_data):
+        password = validated_data.pop('password')
+        user = User.objects.create_user(**validated_data)
+        user.set_password(password)
+        user.save()
+        
+        # Create profile based on user type
+        if user.user_type == 'mentor':
+            MentorProfile.objects.create(user=user)
+        else:
+            StudentProfile.objects.create(user=user)
+        
+        return user
 
-class PostSerializer(serializers.ModelSerializer):
-    author = serializers.SlugRelatedField(
-        slug_field='username',       # Use username to identify author
-        queryset=User.objects.all()  # Allow lookup of existing users
-    )
+class MessageSerializer(serializers.ModelSerializer):
+    sender_id = serializers.CharField(read_only=True)
+    receiver_id = serializers.CharField(read_only=True)
+    sender_name = serializers.CharField(read_only=True)
+    sender_type = serializers.CharField(read_only=True)
+    timestamp = serializers.DateTimeField(read_only=True)
+    
     class Meta:
-        model = Post
-        fields = '__all__'
+        model = Message
+        fields = ['id', 'sender_id', 'receiver_id', 'content', 
+                 'timestamp', 'is_read', 'sender_name', 'sender_type']
+        read_only_fields = ['id', 'timestamp']
+    
+    def create(self, validated_data):
+        validated_data['sender'] = self.context['request'].user
+        return super().create(validated_data)
 
-class ReplySerializer(serializers.ModelSerializer):
+class ConversationSerializer(serializers.ModelSerializer):
+    participants = UserSerializer(many=True, read_only=True)
+    last_message = MessageSerializer(read_only=True)
+    
     class Meta:
-        model = Reply
-        fields = '__all__'
+        model = Conversation
+        fields = ['id', 'participants', 'created_at', 'last_message']
 
-class DMMessageSerializer(serializers.ModelSerializer):
+class MentorProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    
     class Meta:
-        model = DMMessage
-        fields = '__all__'
+        model = MentorProfile
+        fields = ['user', 'specialization', 'experience_years', 
+                 'availability', 'rating', 'total_ratings']
 
-class AnnouncementSerializer(serializers.ModelSerializer):
+class StudentProfileSerializer(serializers.ModelSerializer):
+    user = UserSerializer(read_only=True)
+    current_mentor = UserSerializer(read_only=True)
+    
     class Meta:
-        model = Announcement
+        model = StudentProfile
+        fields = ['user', 'grade_level', 'interests', 'current_mentor']
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
+    
+    def validate(self, data):
+        email = data.get('email')
+        password = data.get('password')
+        
+        if email and password:
+            user = authenticate(username=email, password=password)
+            if user:
+                if user.is_active:
+                    data['user'] = user
+                    return data
+                else:
+                    raise serializers.ValidationError('User account is disabled.')
+            else:
+                raise serializers.ValidationError('Unable to login with provided credentials.')
+        else:
+            raise serializers.ValidationError('Must include email and password.')
+        
+        return data
+
+class DoubtSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Doubt
         fields = '__all__'

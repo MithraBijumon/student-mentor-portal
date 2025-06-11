@@ -1,4 +1,6 @@
+//Make the chat page
 import React, { useState, useEffect, useRef } from 'react';
+import { useLocalSearchParams } from 'expo-router';
 import {
   View,
   Text,
@@ -47,7 +49,7 @@ const Chat: React.FC<ChatProps> = ({ recipientId, recipientName, recipientType }
   const flatListRef = useRef<FlatList>(null);
 
   // API base URL - adjust according to your backend
-  const API_BASE_URL = 'http://your-django-backend-url/api';
+  const API_BASE_URL = 'http://192.168.56.1:8000/api';
 
   useEffect(() => {
     initializeChat();
@@ -70,9 +72,9 @@ const Chat: React.FC<ChatProps> = ({ recipientId, recipientName, recipientType }
   const getCurrentUser = async () => {
     try {
       const token = await AsyncStorage.getItem('authToken');
-      const response = await fetch(`${API_BASE_URL}/auth/user/`, {
+      const response = await fetch(`${API_BASE_URL}/users/me/`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Token ${token}`,
           'Content-Type': 'application/json',
         },
       });
@@ -90,10 +92,10 @@ const Chat: React.FC<ChatProps> = ({ recipientId, recipientName, recipientType }
     try {
       const token = await AsyncStorage.getItem('authToken');
       const response = await fetch(
-        `${API_BASE_URL}/messages/?recipient=${recipientId}`,
+        `${API_BASE_URL}/conversations/${recipientId}/messages/`,
         {
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Token ${token}`,
             'Content-Type': 'application/json',
           },
         }
@@ -114,10 +116,10 @@ const Chat: React.FC<ChatProps> = ({ recipientId, recipientName, recipientType }
   const markMessagesAsRead = async () => {
     try {
       const token = await AsyncStorage.getItem('authToken');
-      await fetch(`${API_BASE_URL}/messages/mark-read/`, {
+      await fetch(`${API_BASE_URL}/conversations/${recipientId}/mark-read/`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Token ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -138,7 +140,7 @@ const Chat: React.FC<ChatProps> = ({ recipientId, recipientName, recipientType }
       const response = await fetch(`${API_BASE_URL}/messages/`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Token ${token}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({

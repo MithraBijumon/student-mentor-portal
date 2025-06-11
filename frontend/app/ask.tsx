@@ -16,12 +16,11 @@ export default function AskScreen() {
     }
 
     try {
-      await axios.post('https://student-mentor-portal.onrender.com/posts/', {
-        title: title,
-        text: body,
-        anonymous: false,
-        author: "testuser"  // or get actual name if available
-});
+      await axios.post('http://192.168.56.1:8000/api/doubts/create/', {
+      title: title,
+      text: body,
+      anonymous: false
+      })
       Alert.alert('Doubt posted!');
       router.replace('/home'); // redirect to home after posting
     } catch (error) {
