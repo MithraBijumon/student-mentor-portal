@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { BASE_URL } from '@/env';
 
 // Types
 interface Message {
@@ -49,7 +50,7 @@ const Chat: React.FC<ChatProps> = ({ recipientId, recipientName, recipientType }
   const flatListRef = useRef<FlatList>(null);
 
   // API base URL - adjust according to your backend
-  const API_BASE_URL = 'http://192.168.56.1:8000/api';
+  const API_BASE_URL = `${BASE_URL}/api`;
 
   useEffect(() => {
     initializeChat();

@@ -75,6 +75,8 @@ REST_FRAMEWORK = {
     'PAGE_SIZE': 20,
 }
 
+ROOT_URLCONF = 'backend.urls'
+
 # Custom User Model
 AUTH_USER_MODEL = 'core.User'  # Replace with your actual app name
 

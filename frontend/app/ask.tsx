@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
+import { BASE_URL } from '@/env';
 
 export default function AskScreen() {
   const [title, setTitle] = useState('');
@@ -16,7 +17,7 @@ export default function AskScreen() {
     }
 
     try {
-      await axios.post('http://192.168.56.1:8000/api/doubts/create/', {
+      await axios.post(`${BASE_URL}/api/doubts/create/`, {
       title: title,
       text: body,
       anonymous: false
