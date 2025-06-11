@@ -31,7 +31,7 @@ def register(request):
         # Generate activation link
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        activation_url = f"http://your-frontend-domain/verify-email/{uid}/{token}"
+        activation_url = f"frontend://verify-email/{uid}/{token}"
 
         send_mail(
             subject='Verify your email',
@@ -45,6 +45,26 @@ def register(request):
         }, status=status.HTTP_201_CREATED)
 
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+from django.utils.http import urlsafe_base64_decode
+from django.shortcuts import get_object_or_404
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def verify_email(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = get_object_or_404(User, pk=uid)
+
+        if default_token_generator.check_token(user, token):
+            user.is_active = True
+            user.save()
+            return Response({'message': 'Email successfully verified. You can now log in.'})
+        else:
+            return Response({'error': 'Invalid or expired token.'}, status=status.HTTP_400_BAD_REQUEST)
+    except Exception as e:
+        return Response({'error': 'Invalid request.'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
@@ -103,7 +123,7 @@ class MessageListCreateView(generics.ListCreateAPIView):
             receiver = User.objects.get(id=receiver_id)
             serializer.save(sender=self.request.user, receiver=receiver)
         except User.DoesNotExist:
-            raise serializers.ValidationError('Receiver not found')
+            raise serializer.ValidationError('Receiver not found')
 
 @api_view(['GET'])
 def conversation_messages(request, user_id):
@@ -180,4 +200,4 @@ def user_conversations(request):
 class DoubtCreateView(generics.CreateAPIView):
     queryset = Doubt.objects.all()
     serializer_class = DoubtSerializer
-    #permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]

@@ -15,7 +15,8 @@ import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import { Ionicons } from "@expo/vector-icons";;
+import { Ionicons } from "@expo/vector-icons";import { BASE_URL } from "@/env";
+;
 export default function LoginScreen() {
   const [Username, setUsername] = useState("");
   const [Email, setEmail] = useState("");
@@ -54,7 +55,7 @@ const handleSubmit = async () => {
       return;
     }
     try {
-      const response = await axios.post('http://192.168.56.1:8000/api/auth/register/', {
+      const response = await axios.post(`${BASE_URL}/api/auth/register/`, {
       username: Username,
       email: Email,
       password: password,
