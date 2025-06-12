@@ -129,6 +129,7 @@ TEMPLATES = [
     },
 ]
 
+ROOT_URLCONF = 'backend.urls'
 # For production, use PostgreSQL:
 # DATABASES = {
 #     'default': {

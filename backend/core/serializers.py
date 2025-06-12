@@ -94,3 +94,4 @@ class DoubtSerializer(serializers.ModelSerializer):
     class Meta:
         model = Doubt
         fields = '__all__'
+        read_only_fields = ['author']

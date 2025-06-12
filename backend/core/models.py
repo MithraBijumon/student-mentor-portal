@@ -2,6 +2,8 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from django.utils import timezone
+from django.utils.timezone import now
+from django.contrib.auth import get_user_model
 import uuid
 from django.conf import settings
 
@@ -98,9 +100,11 @@ class StudentProfile(models.Model):
     def __str__(self):
         return f"Student: {self.user.first_name}"
 
+User = get_user_model()
+
 class Doubt(models.Model):
     title = models.CharField(max_length=255)
     text = models.TextField()
     anonymous = models.BooleanField(default=False)
-    #author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    #created_at = models.DateTimeField(auto_now_add=True)
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)

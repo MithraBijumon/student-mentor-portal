@@ -180,4 +180,12 @@ def user_conversations(request):
 class DoubtCreateView(generics.CreateAPIView):
     queryset = Doubt.objects.all()
     serializer_class = DoubtSerializer
-    #permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if user.is_authenticated:
+            serializer.save(author=user)
+        else:
+            # Optionally assign a default user or skip assigning
+            serializer.save()
