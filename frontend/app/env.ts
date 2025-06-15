@@ -8,5 +8,8 @@ export const API_URL = LOCAL
 export const ENDPOINTS = {
   CREATE_DOUBT: `${API_URL}/api/doubts/create/`,
   GET_DOUBTS: `${API_URL}/api/doubts/`,
-  // add more endpoints as needed
+  LOGIN: `${API_URL}/api/auth/login/`,
+  GET_USER: `${API_URL}/api/users/me/`,
+  CREATE_REPLY: `${API_URL}/api/doubts/`,
+  MARK_AS_ANSWERED: `${API_URL}/api/doubts/`, // Then add `${id}/mark-answered/` in code
 };

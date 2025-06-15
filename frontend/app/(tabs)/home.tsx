@@ -3,11 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, FlatList, ActivityIndicator, StyleSheet, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import axios from 'axios';
+import { ENDPOINTS } from '../env';
 
 interface Question {
   id: number;
   title: string;
-  is_answered: boolean;
+  answered: boolean;
 }
 
 export default function HomeScreen() {
@@ -19,13 +20,12 @@ export default function HomeScreen() {
   const fetchQuestions = async () => {
     setLoading(true);
     try {
-      //const url =
-        //filter === 'all'
-        //  ? 'https://student-mentor-portal.onrender.com/posts/'
-        //  : `https://student-mentor-portal.onrender.com/posts/?filter=${filter}`;
-      //const response = await axios.get(url);
-      //setQuestions(response.data);
-      Alert.alert("Fetching posts")
+      const url =
+        filter === 'all'
+         ? ENDPOINTS.GET_DOUBTS
+          : `${ENDPOINTS.GET_DOUBTS}?filter=${filter}`;
+      const response = await axios.get(url);
+      setQuestions(response.data.results);
     } catch (error) {
       console.error('Failed to fetch questions:', error);
     } finally {
@@ -40,11 +40,11 @@ export default function HomeScreen() {
   const renderQuestion = ({ item }: { item: Question }) => (
     <TouchableOpacity
       style={styles.questionCard}
-      //onPress={() => router.push({ pathname: "/question/[id]", params: { id: item.id.toString() } })}
+      onPress={() => router.push({ pathname: "/question/[id]", params: { id: item.id.toString() } })}
 
     >
       <Text style={styles.title}>{item.title}</Text>
-      <Text style={styles.meta}>{item.is_answered ? '✅ Answered' : '❓ Unanswered'}</Text>
+      <Text style={styles.meta}>{item.answered ? '✅ Answered' : '❓ Unanswered'}</Text>
     </TouchableOpacity>
   );
 

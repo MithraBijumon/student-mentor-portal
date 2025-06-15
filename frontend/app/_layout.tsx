@@ -3,6 +3,7 @@ import { useFonts } from 'expo-font';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import 'react-native-reanimated';
+import linking from './linking';
 
 import { useColorScheme } from '@/hooks/useColorScheme';
 
@@ -22,6 +23,16 @@ export default function RootLayout() {
       <Stack>
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="ask"
+          options={{
+          headerShown: true,
+          title: "Ask a Doubt", // 👈 custom title
+          headerStyle: { backgroundColor: '#4a90e2' },
+          headerTintColor: '#fff',
+          headerTitleAlign: 'center',
+          }}
+        />
         <Stack.Screen name="+not-found" />
       </Stack>
       <StatusBar style="auto" />

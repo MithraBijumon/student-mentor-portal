@@ -8,11 +8,14 @@ import {
   TouchableOpacity,
   Image,
 } from "react-native";
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
 } from "react-native-responsive-screen";
-import { Ionicons } from "@expo/vector-icons";;
+import { Ionicons } from "@expo/vector-icons";
+import { ENDPOINTS } from './env';
 export default function LoginScreen() {
   const [Username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -20,6 +23,36 @@ export default function LoginScreen() {
   const router = useRouter();
   const togglePasswordVisibility = () => {
     setPasswordVisible(!passwordVisible);
+  };
+  const handlePress = async () => {
+    if (!Username || !password) {
+      alert("Please enter both username and password");
+      return;
+    }
+
+    try {
+      const response = await axios.post(ENDPOINTS.LOGIN, {
+        email: Username,
+        password: password,
+      });
+
+      const { token, user } = response.data;
+
+      // Save token to AsyncStorage (or any other secure storage)
+      await AsyncStorage.setItem("token", token);
+      await AsyncStorage.setItem("user", JSON.stringify(user));
+
+      // Navigate to home screen
+      router.replace("/(tabs)/home");
+
+    } catch (error: any) {
+      if (error.response && error.response.status === 400) {
+        alert("Invalid username or password.");
+      } else {
+        alert("Something went wrong. Please try again.");
+      }
+      console.error("Login error:", error);
+    }
   };
   return (
     <View style={styles.container}>
@@ -33,7 +66,7 @@ export default function LoginScreen() {
           style={styles.input}
           onChangeText={setUsername}
           value={Username}
-          placeholder="Username"
+          placeholder="Email"
         />
         <Ionicons
           name="person-circle-outline"
@@ -61,7 +94,7 @@ export default function LoginScreen() {
           />
         </TouchableOpacity>
       </View>
-      <TouchableOpacity style={styles.button} onPress={() => router.replace('/(tabs)/home')}> 
+      <TouchableOpacity style={styles.button} onPress={handlePress}> 
         <Text style={styles.buttonText}>Login</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => router.replace('/password-reset')}> 

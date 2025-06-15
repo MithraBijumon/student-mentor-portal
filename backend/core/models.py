@@ -105,6 +105,14 @@ User = get_user_model()
 class Doubt(models.Model):
     title = models.CharField(max_length=255)
     text = models.TextField()
+    answered = models.BooleanField(default=False)
     anonymous = models.BooleanField(default=False)
     author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+
+class Reply(models.Model):
+    doubt = models.ForeignKey(Doubt, on_delete=models.CASCADE, related_name='replies')
+    text = models.TextField()
+    author = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_mentor = models.BooleanField(default=False)

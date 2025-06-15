@@ -1,22 +1,29 @@
 # views.py
 from rest_framework import generics, status, permissions
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import authenticate
 from django.db.models import Q
 from .models import User, Message, Conversation, MentorProfile, StudentProfile
 from .serializers import (
-    UserSerializer, MessageSerializer, ConversationSerializer,
+    UserSerializer, ReplySerializer, MessageSerializer, ConversationSerializer,
     MentorProfileSerializer, StudentProfileSerializer, LoginSerializer
 )
 from django.core.mail import send_mail
 from django.urls import reverse
 from django.utils.http import urlsafe_base64_encode
+from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_bytes
+from django.http import HttpResponse
 from django.contrib.auth.tokens import default_token_generator
 from .models import Doubt
 from .serializers import DoubtSerializer
+from django.contrib.auth import get_user_model
+from rest_framework.authentication import TokenAuthentication
+
+
+
 
 # Authentication Views
 @api_view(['POST'])
@@ -31,7 +38,7 @@ def register(request):
         # Generate activation link
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        activation_url = f"http://your-frontend-domain/verify-email/{uid}/{token}"
+        activation_url = f"http://192.168.151.198:8000/api/auth/activate/{uid}/{token}/"
 
         send_mail(
             subject='Verify your email',
@@ -68,6 +75,7 @@ def logout(request):
         return Response({'error': 'Error logging out'}, status=status.HTTP_400_BAD_REQUEST)
 
 # User Views
+@permission_classes([permissions.AllowAny])
 class UserListView(generics.ListAPIView):
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -78,10 +86,10 @@ class UserListView(generics.ListAPIView):
         if user_type:
             queryset = queryset.filter(user_type=user_type)
         return queryset
-
+    
+@permission_classes([permissions.IsAuthenticated])
 class UserDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = UserSerializer
-    permission_classes = [permissions.IsAuthenticated]
     
     def get_object(self):
         return self.request.user
@@ -180,12 +188,72 @@ def user_conversations(request):
 class DoubtCreateView(generics.CreateAPIView):
     queryset = Doubt.objects.all()
     serializer_class = DoubtSerializer
-    permission_classes = [permissions.AllowAny]
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
+    def perform_create(self, serializer):
+        print("Logged in user:", self.request.user)
+        serializer.save(author=self.request.user)
+
+User = get_user_model()
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def activate_user(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User.objects.get(pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user and default_token_generator.check_token(user, token):
+        user.is_active = True
+        user.save()
+        return HttpResponse("✅ Your email has been successfully verified. You can now login.")
+    else:
+        return HttpResponse("❌ Activation link is invalid or expired.", status=400)
+    
+# views.py
+@permission_classes([permissions.AllowAny])
+class DoubtListView(generics.ListAPIView):
+    queryset = Doubt.objects.all()
+    serializer_class = DoubtSerializer
+
+    def get_queryset(self):
+        filter_param = self.request.query_params.get('filter')
+        if filter_param == 'answered':
+            return self.queryset.filter(answered=True)
+        elif filter_param == 'unanswered':
+            return self.queryset.filter(answered=False)
+        return self.queryset
+    
+class DoubtDetailView(generics.RetrieveAPIView):
+    queryset = Doubt.objects.all()
+    serializer_class = DoubtSerializer
+
+class ReplyCreateView(generics.CreateAPIView):
+    serializer_class = ReplySerializer
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [permissions.IsAuthenticated]
 
     def perform_create(self, serializer):
-        user = self.request.user
-        if user.is_authenticated:
-            serializer.save(author=user)
-        else:
-            # Optionally assign a default user or skip assigning
-            serializer.save()
+        doubt_id = self.kwargs['doubt_id']
+        doubt = Doubt.objects.get(id=doubt_id)
+        is_mentor = self.request.user.user_type == 'mentor'
+        serializer.save(
+            doubt=doubt,
+            author=self.request.user,
+            is_mentor=is_mentor
+        )
+
+@api_view(['PATCH'])
+@authentication_classes([TokenAuthentication])
+@permission_classes([permissions.IsAuthenticated])
+def mark_doubt_as_answered(request, doubt_id):
+    try:
+        doubt = Doubt.objects.get(id=doubt_id)
+        if not doubt.answered:
+            doubt.answered = True
+            doubt.save()
+        return Response({'status': 'marked as answered'})
+    except Doubt.DoesNotExist:
+        return Response({'error': 'Doubt not found'}, status=status.HTTP_404_NOT_FOUND)

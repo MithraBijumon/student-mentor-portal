@@ -18,6 +18,37 @@ export default function Layout() {
           return <Ionicons name={iconName} size={size} color={color} />;
         },
       })}
-    />
+    >
+      <Tabs.Screen
+        name="home"
+        options={{
+          title: "HOME",
+          headerShown: true,
+          headerStyle: { backgroundColor: '#4a90e2' },
+          headerTintColor: '#fff',
+          headerTitleAlign: 'center',
+        }}
+      />
+      <Tabs.Screen
+        name="mentors"
+        options={{
+          title: "MENTORS",
+          headerShown: true,
+          headerStyle: { backgroundColor: '#4a90e2' },
+          headerTintColor: '#fff',
+          headerTitleAlign: 'center',
+        }}
+      />
+      <Tabs.Screen
+        name="announcements"
+        options={{
+          title: "ANNOUNCEMENTS",
+          headerShown: true,
+          headerStyle: { backgroundColor: '#4a90e2' },
+          headerTintColor: '#fff',
+          headerTitleAlign: 'center',
+        }}
+      />
+    </Tabs>
   );
 }

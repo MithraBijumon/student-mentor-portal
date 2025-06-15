@@ -1,34 +1,45 @@
 // app/question/[id].tsx
 import { useLocalSearchParams } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { View, Text, ActivityIndicator, TextInput, Button, StyleSheet, FlatList } from 'react-native';
+import { View, Text, ActivityIndicator, TextInput, Button, StyleSheet, FlatList, Alert } from 'react-native';
 import axios from 'axios';
+import { ENDPOINTS } from '../env';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 
 interface Reply {
   id: number;
   author: string;
-  message: string;
+  text: string;
 }
 
-interface QuestionDetail {
+interface Question {
   id: number;
   title: string;
-  content: string;
-  is_answered: boolean;
+  text: string;
+  answered: boolean;
   replies: Reply[];
 }
 
 export default function QuestionDetailScreen() {
   const { id } = useLocalSearchParams();
-  const [question, setQuestion] = useState<QuestionDetail | null>(null);
+  const [question, setQuestion] = useState<Question | null>(null);
   const [loading, setLoading] = useState(true);
   const [reply, setReply] = useState('');
+  
   const [submitting, setSubmitting] = useState(false);
-
+  const [token, setToken] = useState('');
+  useEffect(() => {
+    const getToken = async () => {
+      const storedToken = await AsyncStorage.getItem('token');
+      if (storedToken) setToken(storedToken);
+    };
+    getToken();
+  }, []);
   const fetchQuestion = async () => {
     setLoading(true);
     try {
-      const response = await axios.get(`https://student-mentor-portal.onrender.com/posts/${id}/`);
+      const response = await axios.get(`${ENDPOINTS.GET_DOUBTS}${id}/`);
       setQuestion(response.data);
     } catch (error) {
       console.error('Failed to load question:', error);
@@ -40,11 +51,27 @@ export default function QuestionDetailScreen() {
   const submitReply = async () => {
     if (!reply.trim()) return;
     setSubmitting(true);
+    if (loading || !question) {
+      return <ActivityIndicator style={{ marginTop: 50 }} size="large" />;
+    }
     try {
-      await axios.post(`https://student-mentor-portal.onrender.com/posts/${id}/reply/`, {
-        message: reply,
-        author: 'Student', // Replace with actual user name if available
-      });
+      await axios.post(
+        `${ENDPOINTS.CREATE_REPLY}${question.id}/replies/`,
+        { text: reply },
+        {
+          headers: { Authorization: `Token ${token}` },
+        }
+      );
+      if (!question.answered) {
+      await axios.patch(
+        `${ENDPOINTS.MARK_AS_ANSWERED}${question.id}/mark-answered/`,
+        {},
+        {
+          headers: { Authorization: `Token ${token}` },
+        }
+      );
+    }
+      Alert.alert("Reply Posted")
       setReply('');
       fetchQuestion();
     } catch (error) {
@@ -65,7 +92,7 @@ export default function QuestionDetailScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>{question.title}</Text>
-      <Text style={styles.content}>{question.content}</Text>
+      <Text style={styles.content}>{question.text}</Text>
 
       <Text style={styles.sectionHeading}>Replies:</Text>
       <FlatList
@@ -74,23 +101,21 @@ export default function QuestionDetailScreen() {
         renderItem={({ item }) => (
           <View style={styles.replyCard}>
             <Text style={styles.replyAuthor}>{item.author}</Text>
-            <Text>{item.message}</Text>
+            <Text>{item.text}</Text>
           </View>
         )}
       />
 
-      {!question.is_answered && (
-        <View style={styles.replyBox}>
-          <TextInput
-            placeholder="Write a reply..."
-            style={styles.input}
-            value={reply}
-            onChangeText={setReply}
-            multiline
-          />
-          <Button title={submitting ? "Sending..." : "Send"} onPress={submitReply} disabled={submitting} />
-        </View>
-      )}
+      <View style={styles.replyBox}>
+        <TextInput
+          placeholder="Write a reply..."
+          style={styles.input}
+          value={reply}
+          onChangeText={setReply}
+          multiline
+        />
+        <Button title={submitting ? "Sending..." : "Send"} onPress={submitReply} disabled={submitting} />
+      </View>
     </View>
   );
 }

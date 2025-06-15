@@ -11,6 +11,7 @@ import {
   Alert,
 } from "react-native";
 import axios from 'axios';
+import { ENDPOINTS } from './env';
 import {
   widthPercentageToDP as wp,
   heightPercentageToDP as hp,
@@ -54,7 +55,7 @@ const handleSubmit = async () => {
       return;
     }
     try {
-      const response = await axios.post('http://192.168.56.1:8000/api/auth/register/', {
+      const response = await axios.post('http://192.168.151.198:8000/api/auth/register/', {
       username: Username,
       email: Email,
       password: password,

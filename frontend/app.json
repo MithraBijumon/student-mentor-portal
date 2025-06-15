@@ -6,8 +6,10 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "frontend",
+    "deepLinking": true,
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "platforms": ["ios", "android", "web"],
     "ios": {
       "supportsTablet": true
     },

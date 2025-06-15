@@ -1,7 +1,7 @@
 # serializers.py
 from rest_framework import serializers
 from django.contrib.auth import authenticate
-from .models import User, Message, Conversation, MentorProfile, StudentProfile, Doubt
+from .models import User, Reply, Message, Conversation, MentorProfile, StudentProfile, Doubt
 
 class UserSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
@@ -90,8 +90,16 @@ class LoginSerializer(serializers.Serializer):
         
         return data
 
+class ReplySerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField()
+    class Meta:
+        model = Reply
+        fields = ['id', 'text', 'author', 'created_at']
+        read_only_fields = ['author', 'created_at', 'is_mentor']
+        
 class DoubtSerializer(serializers.ModelSerializer):
+    replies = ReplySerializer(many=True, read_only=True)
     class Meta:
         model = Doubt
         fields = '__all__'
-        read_only_fields = ['author']
+        read_only_fields = ['author', 'created_at']

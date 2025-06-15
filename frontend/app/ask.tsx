@@ -1,14 +1,39 @@
 // app/ask.tsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import axios from 'axios';
 import { useRouter } from 'expo-router';
 import { ENDPOINTS } from './env';
+import { Checkbox } from 'react-native-paper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function AskScreen() {
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
+  const [token, setToken] = useState('');
+  const [authorId, setAuthorId] = useState(null); 
+  const [anonymous, setAnonymous] = useState(false);
   const router = useRouter();
+
+  // ✅ Fetch token and user
+  useEffect(() => {
+    const fetchTokenAndUser = async () => {
+      try {
+        const storedToken = await AsyncStorage.getItem('token');
+        if (storedToken) {
+          setToken(storedToken);
+          const userRes = await axios.get(`${ENDPOINTS.GET_USER}`, {
+            headers: { Authorization: `Token ${storedToken}` },
+          });
+          setAuthorId(userRes.data.id); 
+        }
+      } catch (error) {
+        console.error('Error fetching user:', error);
+      }
+    };
+
+    fetchTokenAndUser();
+  }, []);
 
   const handleSubmit = async () => {
     if (!title.trim() || !body.trim()) {
@@ -16,17 +41,35 @@ export default function AskScreen() {
       return;
     }
 
+    if (!authorId) {
+      Alert.alert('User not authenticated');
+      return;
+    }
+
     try {
-      await axios.post(ENDPOINTS.CREATE_DOUBT, {
-      title: title,
-      text: body,
-      anonymous: false
-      })
+      await axios.post(
+        ENDPOINTS.CREATE_DOUBT,
+        {
+          title: title,
+          text: body,
+          anonymous: anonymous, 
+        },
+        {
+          headers: {
+            Authorization: `Token ${token}`, 
+          },
+        }
+      );
       Alert.alert('Doubt posted!');
-      router.replace('/home'); // redirect to home after posting
+      router.replace('/home');
     } catch (error) {
-      console.error('Error posting question:', error);
-      Alert.alert('Failed to post doubt');
+      if (axios.isAxiosError(error)) {
+        console.error('Axios error:', error.response?.data);
+        Alert.alert('Failed to post doubt', error.response?.data?.detail || 'Unknown error');
+      } else {
+        console.error('Unexpected error:', error);
+        Alert.alert('Failed to post doubt');
+      }
     }
   };
 
@@ -52,9 +95,18 @@ export default function AskScreen() {
       <TouchableOpacity style={styles.button} onPress={handleSubmit}>
         <Text style={styles.buttonText}>Post</Text>
       </TouchableOpacity>
+
+      <View>
+        <Checkbox.Item
+          label="Post Anonymously"
+          status={anonymous ? 'checked' : 'unchecked'}
+          onPress={() => setAnonymous(!anonymous)}
+        />
+      </View>
     </View>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: '#fff' },
