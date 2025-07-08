@@ -33,7 +33,7 @@ def register(request):
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        user.is_active = True  # user must verify first
+        user.is_active = False  # user must verify first
         user.save()
 
         # Generate activation link
