@@ -1,7 +1,7 @@
 # urls.py (in your app)
 from django.urls import path
 from . import views
-from .views import activate_user, ReplyCreateView
+from .views import activate_user, ReplyCreateView, AnnouncementListCreateView
 
 urlpatterns = [
     # Authentication
@@ -27,5 +27,6 @@ urlpatterns = [
     path('doubts/<int:pk>/', views.DoubtDetailView.as_view(), name='doubt-detail'),
     path('doubts/<int:doubt_id>/replies/', ReplyCreateView.as_view(), name='reply-create'),
     path('doubts/<int:doubt_id>/mark-answered/', views.mark_doubt_as_answered, name='mark-answered'),
+    path('announcements/', AnnouncementListCreateView.as_view(), name='announcements'),
 ]
 

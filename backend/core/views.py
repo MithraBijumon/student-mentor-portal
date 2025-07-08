@@ -3,12 +3,13 @@ from rest_framework import generics, status, permissions
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+from rest_framework.views import exception_handler
 from django.contrib.auth import authenticate
 from django.db.models import Q
-from .models import User, Message, Conversation, MentorProfile, StudentProfile
+from .models import User, Message, Conversation, MentorProfile, StudentProfile, Announcement
 from .serializers import (
     UserSerializer, ReplySerializer, MessageSerializer, ConversationSerializer,
-    MentorProfileSerializer, StudentProfileSerializer, LoginSerializer
+    MentorProfileSerializer, StudentProfileSerializer, LoginSerializer, AnnouncementSerializer
 )
 from django.core.mail import send_mail
 from django.urls import reverse
@@ -32,13 +33,13 @@ def register(request):
     serializer = UserSerializer(data=request.data)
     if serializer.is_valid():
         user = serializer.save()
-        user.is_active = False  # user must verify first
+        user.is_active = True  # user must verify first
         user.save()
 
         # Generate activation link
         uid = urlsafe_base64_encode(force_bytes(user.pk))
         token = default_token_generator.make_token(user)
-        activation_url = f"http://192.168.151.198:8000/api/auth/activate/{uid}/{token}/"
+        activation_url = f"https://649fb13eada1.ngrok-free.app/api/auth/activate/{uid}/{token}/"
 
         send_mail(
             subject='Verify your email',
@@ -257,3 +258,19 @@ def mark_doubt_as_answered(request, doubt_id):
         return Response({'status': 'marked as answered'})
     except Doubt.DoesNotExist:
         return Response({'error': 'Doubt not found'}, status=status.HTTP_404_NOT_FOUND)
+
+class AnnouncementListCreateView(generics.ListCreateAPIView):
+    queryset = Announcement.objects.all().order_by('-created_at')
+    serializer_class = AnnouncementSerializer
+    permission_classes = [permissions.AllowAny]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        return Response({
+            "detail": "Announcement posted successfully.",
+            "data": serializer.data
+        }, status=status.HTTP_201_CREATED, headers=headers)

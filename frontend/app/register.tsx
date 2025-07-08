@@ -46,31 +46,72 @@ export default function LoginScreen() {
   }
 ];
 const handleSubmit = async () => {
-    if (!Username.trim() || !Email.trim() || !password.trim() || !confirmPassword.trim()) {
-      Alert.alert('Please fill out all fields');
-      return;
-    }
-    if (!passwordsMatch) {
-      Alert.alert('Password do not match');
-      return;
-    }
-    try {
-      const response = await axios.post('http://192.168.151.198:8000/api/auth/register/', {
-      username: Username,
-      email: Email,
-      password: password,
-    });
-      if (response.status === 201) {
+  if (!Username.trim() || !Email.trim() || !password.trim() || !confirmPassword.trim()) {
+    Alert.alert('Please fill out all fields');
+    return;
+  }
+
+  if (password !== confirmPassword) {
+    Alert.alert('Passwords do not match');
+    return;
+  }
+
+  try {
+    console.log("Sending registration request...");
+    
+    // Make sure your ngrok URL is current
+    const API_URL = 'https://649fb13eada1.ngrok-free.app';
+    
+    const response = await axios.post(
+      `${API_URL}/api/auth/register/`,
+      {
+        username: Username,
+        email: Email,
+        password: password,
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log("Response:", response);
+
+    if (response.status === 201 || response.status === 200) {
       Alert.alert('Verification mail sent! Verify to login');
       router.replace('/login');
     } else {
-      Alert.alert('Registration failed');
+      Alert.alert('Registration failed', 'Unexpected status: ' + response.status);
     }
-    } catch (error: any) {
-    console.error('Registration error:', error.response?.data || error.message);
-    Alert.alert('Error', error.response?.data?.email?.[0] || 'Registration failed');
+  } catch (error) {
+    console.error("Full error object:", error);
+    
+    if (error.response) {
+      // Server responded with error status
+      console.log("Error status:", error.response.status);
+      console.log("Error data:", error.response.data);
+      
+      if (error.response.status === 404) {
+        Alert.alert("Error", "API endpoint not found. Please check if the server is running.");
+      } else {
+        const errorMessage =
+          error?.response?.data?.email?.[0] ||
+          error?.response?.data?.username?.[0] ||
+          error?.response?.data?.password?.[0] ||
+          error?.response?.data?.detail ||
+          "Registration failed";
+        Alert.alert("Registration Error", errorMessage);
+      }
+    } else if (error.request) {
+      // Network error
+      Alert.alert("Network Error", "Cannot connect to server. Check your internet connection.");
+    } else {
+      Alert.alert("Error", error.message || "Unknown registration error");
+    }
   }
-}
+};
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Register</Text>
