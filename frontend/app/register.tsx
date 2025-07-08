@@ -58,9 +58,7 @@ const handleSubmit = async () => {
 
   try {
     console.log("Sending registration request...");
-    
-    // Make sure your ngrok URL is current
-    const API_URL = 'https://649fb13eada1.ngrok-free.app';
+    const API_URL = 'http://192.168.0.101:8000';
     
     const response = await axios.post(
       `${API_URL}/api/auth/register/`,
